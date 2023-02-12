@@ -63,7 +63,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ClimbLadder()
     {
-        if (m_feetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+        if (m_bodyCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
         {
             float verticalVelocity = m_moveInput.y * m_climbSpeed;
             Vector2 climbVelocity = new Vector2(m_rigidBody.velocity.x, verticalVelocity);
