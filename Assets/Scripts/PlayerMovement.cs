@@ -8,30 +8,48 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float m_runSpeed = 10.0f;
     [SerializeField] float m_jumpSpeed = 23.0f;
     [SerializeField] float m_climbSpeed = 5.0f;    
+    [SerializeField] Vector2 m_deathKick = new Vector2(10.0f, 20.0f);
+    [SerializeField] GameObject m_bullet;
+    [SerializeField] Transform m_gunTransform;
     Vector2 m_moveInput;
     Rigidbody2D m_rigidBody;
-    Collider2D m_collider;
+    BoxCollider2D m_feetCollider;
+    CapsuleCollider2D m_bodyCollider;
     Animator m_animator;
     float m_gravityOnStart;
+    bool m_isAlive = true;
+    SpriteRenderer m_spriteRenderer;
 
     void Start()
     {
       m_rigidBody = GetComponent<Rigidbody2D>();
       m_gravityOnStart = m_rigidBody.gravityScale;
-      m_collider = GetComponent<CapsuleCollider2D>();
+      m_feetCollider = GetComponent<BoxCollider2D>();
+      m_bodyCollider = GetComponent<CapsuleCollider2D>();
       m_animator = GetComponent<Animator>();
+      m_spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     void Update()
     {
+        if (!m_isAlive)
+            return;
+
         Run();
         ClimbLadder();
         FlipSprite();
+        CheckAliveState();
     }
 
     void OnMove(InputValue value)
     {
         m_moveInput = value.Get<Vector2>();
+    }
+
+    void OnFire(InputValue value)
+    {
+        // GetComponentInChildren<Gun>();
+        Instantiate(m_bullet, m_gunTransform.position, m_gunTransform.rotation);
     }
 
     void Run()
@@ -45,7 +63,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ClimbLadder()
     {
-        if (m_collider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+        if (m_feetCollider.IsTouchingLayers(LayerMask.GetMask("Climbing")))
         {
             float verticalVelocity = m_moveInput.y * m_climbSpeed;
             Vector2 climbVelocity = new Vector2(m_rigidBody.velocity.x, verticalVelocity);
@@ -65,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnJump(InputValue value)
     {
-        if (m_collider.IsTouchingLayers(LayerMask.GetMask("Ground")))
+        if (m_feetCollider.IsTouchingLayers(LayerMask.GetMask("Ground")))
         {
             if (value.isPressed)
             {
@@ -79,5 +97,15 @@ public class PlayerMovement : MonoBehaviour
         bool hasHorizontalSpeed = Mathf.Abs(m_moveInput.x) > Mathf.Epsilon;
         if (hasHorizontalSpeed)
             transform.localScale = new Vector2(Mathf.Sign(m_moveInput.x), 1.0f);
+    }
+
+    void CheckAliveState()
+    {
+        m_isAlive = !m_rigidBody.IsTouchingLayers(LayerMask.GetMask("Enemy", "Hazards"));
+        if (!m_isAlive)
+        {
+            m_animator.SetTrigger("Dying");
+            m_rigidBody.velocity = new Vector2(-Mathf.Sign(m_rigidBody.velocity.x) * m_deathKick.x, m_deathKick.y);
+        }
     }
 }
