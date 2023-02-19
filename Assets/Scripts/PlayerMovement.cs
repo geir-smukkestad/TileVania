@@ -106,6 +106,8 @@ public class PlayerMovement : MonoBehaviour
         {
             m_animator.SetTrigger("Dying");
             m_rigidBody.velocity = new Vector2(-Mathf.Sign(m_rigidBody.velocity.x) * m_deathKick.x, m_deathKick.y);
+
+            FindObjectOfType<GameManager>().ProcessPlayerDeath();
         }
     }
 }
